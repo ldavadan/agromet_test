@@ -3,16 +3,5 @@
 .Rhistory
 .RData
 .Ruserdata
-*.rds
-*.dbf
-*.prf
-*.sbn
-*.sbx
-*.shp
-*.shp.xml
-*shx
-*.zip
-.mdb
-.csv
-.sp
 data-raw/
+*.rds
