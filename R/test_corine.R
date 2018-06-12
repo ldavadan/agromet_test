@@ -105,9 +105,15 @@ corine.rast <- rasterize(corine.wal.simple.sp, rast)
 
 levels(corine.rast)
 
+crs(grid.sp)
+crs(corine.wal.simple.sp) <- crs(grid.sp)
+identical(crs(grid.sp), crs(corine.wal.simple.sp))
+test <- over(x = grid.sp, y = corine.wal.simple.sp)
 
-
-
+class.grid <- bind_cols(data.frame(grid.sp), class = test$CLASS)
+coordinates(class.grid) <- c("x1", "x2")
+library(mapview)
+mapview(class.grid)
 
 
 grid.sp <- build_wal_grid.sp.fun(1000)
