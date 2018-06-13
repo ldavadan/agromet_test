@@ -20,25 +20,30 @@ p_loaded()
 
 # Dynamic Sourcing of all the required functions
 source(paste0("../R-utilities/R-utilities.R"))
-source_files_recursively.fun("./R")
+#source_files_recursively.fun("./R")
 source_files_recursively.fun("../agrometeor-public/R/")
 
 # https://www.geo.be/#!/catalog/details/bcd19aa9-c320-4116-971b-6e4376137f13?l=en
 
 # Download shapefile
-#download.file("https://ac.ngi.be/client-open/4JLSG7JnsKlqHwlGdiQh/ngi-standard-open/Vectordata/CLC2012/CLC12_BE_shp_L08.zip",
+# Warning : go to https://ac.ngi.be/client-open/vndl5zdmH4wgScjyTVdS?language=en&openpath=ngi-standard-open%2FVectordata%2FCLC2012%2FCLC12_BE_shp_L08.zip&tab=dataaccess&auth=false&open=true&accesscode=vndl5zdmH4wgScjyTVdS
+# and accept the conditions and then, download the file CLC12_BE.zip and unzip it a a folder
+# download.file("https://ac.ngi.be/client-open/2RxqJzG8p4ezxcE926oF/ngi-standard-open/Vectordata/CLC2012/CLC12_BE_shp_L08.zip",
 #              destfile = "./data-raw/CLC12_BE.zip")
 
 #unzip("./data-raw/CLC12_BE.zip", exdir = "./data-raw")
 
-
+# Load spatial data from Wallonia limits
+be.sp <- getData('GADM', country = 'BE', level = 1, download = TRUE)
+wallonie.sp <- be.sp[be.sp$NAME_1 == "Wallonie",]
+wallonie.3812.poly.sp <- spTransform(wallonie.sp, CRS(projargs = dplyr::filter(rgdal::make_EPSG(), code == "3812")$prj4))
 
 # CORINE land cover for Belgium
 corine.sp <- readShapePoly("./data-raw/CLC12_BE.shp")
 # CORINE land cover for Wallonia
 # https://stackoverflow.com/questions/13982773/crop-for-spatialpolygonsdataframe
-load("~/Documents/code/agromet-tests/data-raw/wallonie.3812.sp")
-corine.wal.sp <- crop(corine.sp, wallonie.3812.sp)
+corine.wal.sp <- crop(corine.sp, wallonie.3812.poly.sp)
+
 
 # Legend for CORINE land cover
 # Download legend
@@ -55,7 +60,6 @@ legend.wal <- subset(legend, CLC_CODE %in% legend.code.wal$unique.corine.wal.sp.
 
 # CLC_CODE class from integer to numeric
 legend.wal$CLC_CODE <- as.numeric(legend.wal$CLC_CODE)
-
 
 corine.wal.sf <- st_as_sf(corine.wal.sp)
 corine.wal.sf$code_12 <- as.numeric(paste(corine.wal.sf$code_12))
@@ -87,51 +91,51 @@ reclass_CLC <- function(col.name){
             col.name > 400 ~ "Water")
 }
 
-
+# Reclass all types of CLC to create 6 groups
 corine.wal.simple.sf <- corine.wal.sf %>%
   mutate(CLASS = reclass_CLC(code_12))
 
 corine.wal.simple.sp <- as(corine.wal.simple.sf, "Spatial")
-# https://gis.stackexchange.com/questions/17798/converting-a-polygon-into-a-raster-using-r
-corine.wal.simple.df <- data.frame(corine.wal.simple.sf)
-rast <- raster()
-crs(rast) <- '+proj=lcc +lat_1=49.83333333333334 +lat_2=51.16666666666666 +lat_0=50.797815 +lon_0=4.359215833333333
-+x_0=649328 +y_0=665262 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs'
-extent(rast) <- extent(corine.wal.simple.sp)
-corine.rast <- rasterize(corine.wal.simple.sp, rast)
 
 
 
-
-levels(corine.rast)
-
-crs(grid.sp)
-crs(corine.wal.simple.sp) <- crs(grid.sp)
-identical(crs(grid.sp), crs(corine.wal.simple.sp))
-test <- over(x = grid.sp, y = corine.wal.simple.sp)
-
-class.grid <- bind_cols(data.frame(grid.sp), class = test$CLASS)
-coordinates(class.grid) <- c("x1", "x2")
-library(mapview)
-mapview(class.grid)
-
-
-grid.sp <- build_wal_grid.sp.fun(1000)
-# core the topo rasters stack at the positions of the interpolation grid
-
-corine.df <- data.frame(
-  raster::extract(
-    projectRaster(
-      corine.rast,
-      crs=crs(wallonie.3812.sp)),
-    wallonie.3812.sp,
-    weights=FALSE,
-    fun=mean
-  )
-)
+### Create a grid with class of each point
+# crs(wallonie.3812.sp)
+# crs(corine.wal.simple.sp) <- crs(wallonie.3812.sp)
+# identical(crs(wallonie.3812.sp), crs(corine.wal.simple.sp))
+# test <- over(x = wallonie.3812.sp, y = corine.wal.simple.sp)
+# 
+# class.grid <- bind_cols(data.frame(wallonie.3812.sp), class = test$CLASS)
+# coordinates(class.grid) <- c("x1", "x2")
+# library(mapview)
+# mapview(class.grid, col.region = c("yellow3", "red", "forestgreen", "green", "grey10", "cyan"))
 
 
 
+# Load AGROMET stations from API and project in EPSG:3812
+stations.sp <- build_agromet_stations_points.sp.fun()
+stations.sp <- spTransform(stations.sp, CRSobj = "+proj=lcc +lat_1=49.83333333333334 +lat_2=51.16666666666666 +lat_0=50.797815 +lon_0=4.359215833333333 +x_0=649328 +y_0=665262 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
+stations.sf <- st_as_sf(stations.sp)
+
+# Make a buffer around stations
+# https://gis.stackexchange.com/questions/229453/create-a-circle-of-defined-radius-around-a-point-and-then-find-the-overlapping-a
+# https://stackoverflow.com/questions/46704878/circle-around-a-geographic-point-with-st-buffer
+stations.buff.sf <- st_buffer(x = stations.sf, dist = 100)
+
+# Cross-reference data to find the different land covers in the buffer
+st_crs(corine.wal.simple.sf) <- st_crs(stations.buff.sf)
+class.buff.stations.sf <- st_intersection(corine.wal.simple.sf, stations.buff.sf)
 
 
+# Extract area of land covers in the buffer
+# https://gis.stackexchange.com/questions/229453/create-a-circle-of-defined-radius-around-a-point-and-then-find-the-overlapping-a
+class.buff.stations.sf.summary <- group_by(class.buff.stations.sf, ID) %>% 
+  summarise() %>%
+  mutate(common_area = st_area(.))
+
+# Make a column with percentage of occupation of each land cover
+class.buff.stations.gr.sf <- inner_join(as.data.frame(class.buff.stations.sf), 
+                                        as.data.frame(class.buff.stations.sf.summary), "ID", copy = TRUE) %>%
+  select(sid, CLASS, common_area) %>%
+  mutate(rate_cover = as.numeric(common_area/(3.14015737*100^2) * 100))
 
