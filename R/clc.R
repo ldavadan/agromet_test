@@ -1,36 +1,8 @@
 ### Script of functions to get CORINE land cover from Wallonia and identify land covers near to PAMESEB stations
 
 
-#' It creates 6 groups from the 26 different land cover labels
-#' @author Loïc Davadan - ldavadan.github.io
-#' @param col.name A name of a column you want to reclass
-reclass_CLC <- function(col.name){
-  
-  dplyr::case_when(col.name <= 121 ~ "Artificials surfaces",
-            col.name == 122 ~ "Road/Rail",
-            col.name == 123 ~ "Artificials surfaces",
-            col.name == 124 ~ "Artificials surfaces",
-            col.name == 131 ~ "Artificials surfaces",
-            col.name == 132 ~ "Artificials surfaces",
-            col.name == 133 ~ "Artificials surfaces",
-            col.name == 141 ~ "Artificials surfaces",
-            col.name == 142 ~ "Artificials surfaces",
-            col.name == 211 ~ "Agricultural areas",
-            col.name == 222 ~ "Agricultural areas",
-            col.name == 231 ~ "Herbaceous vegetation",
-            col.name == 242 ~ "Agricultural areas",
-            col.name == 243 ~ "Agricultural areas",
-            col.name == 311 ~ "Forest",
-            col.name == 312 ~ "Forest",
-            col.name == 313 ~ "Forest",
-            col.name == 321 ~ "Herbaceous vegetation",
-            col.name == 322 ~ "Herbaceous vegetation",
-            col.name == 324 ~ "Forest",
-            col.name > 400 ~ "Water")
-}
-
-
 #' It gets CLC data from Wallonia and reclass them
+#' @author Loïc Davadan - ldavadan.github.io
 get_clc_wal <- function() {
   
   # Lambert 2008
@@ -70,7 +42,27 @@ get_clc_wal <- function() {
   
   # Reclass all types of CLC to create 6 groups
   corine.wal.simple.sf <- corine.wal.sf %>%
-    dplyr::mutate(CLASS = reclass_CLC(code_12))
+    dplyr::mutate(CLASS = dplyr::case_when(code_12 <= 121 ~ "Artificials surfaces",
+                                           code_12 == 122 ~ "Road/Rail",
+                                           code_12 == 123 ~ "Artificials surfaces",
+                                           code_12 == 124 ~ "Artificials surfaces",
+                                           code_12 == 131 ~ "Artificials surfaces",
+                                           code_12 == 132 ~ "Artificials surfaces",
+                                           code_12 == 133 ~ "Artificials surfaces",
+                                           code_12 == 141 ~ "Artificials surfaces",
+                                           code_12 == 142 ~ "Artificials surfaces",
+                                           code_12 == 211 ~ "Agricultural areas",
+                                           code_12 == 222 ~ "Agricultural areas",
+                                           code_12 == 231 ~ "Herbaceous vegetation",
+                                           code_12 == 242 ~ "Agricultural areas",
+                                           code_12 == 243 ~ "Agricultural areas",
+                                           code_12 == 311 ~ "Forest",
+                                           code_12 == 312 ~ "Forest",
+                                           code_12 == 313 ~ "Forest",
+                                           code_12 == 321 ~ "Herbaceous vegetation",
+                                           code_12 == 322 ~ "Herbaceous vegetation",
+                                           code_12 == 324 ~ "Forest",
+                                           code_12 > 400 ~ "Water"))
   
 }
 
@@ -114,10 +106,10 @@ extract_stations_clc_buffer <- function(corine.wal.simple.sf = NULL, radius.num 
 }
 
 # # Load AGROMET stations from API and project in EPSG:3812
-# stations.sp <- build_agromet_stations_points.sp.fun()
-# stations.sp <- sp::spTransform(stations.sp, CRSobj = "+proj=lcc +lat_1=49.83333333333334 +lat_2=51.16666666666666 +lat_0=50.797815 +lon_0=4.359215833333333 +x_0=649328 +y_0=665262 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
-# stations.sf <- sf::st_as_sf(stations.sp)
-# corine.wal.simple.sf <- get_clc_wal()
+stations.sp <- build_agromet_stations_points.sp.fun()
+stations.sp <- sp::spTransform(stations.sp, CRSobj = "+proj=lcc +lat_1=49.83333333333334 +lat_2=51.16666666666666 +lat_0=50.797815 +lon_0=4.359215833333333 +x_0=649328 +y_0=665262 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
+stations.sf <- sf::st_as_sf(stations.sp)
+corine.wal.simple.sf <- get_clc_wal()
 # test <- extract_stations_clc_buffer(corine.wal.simple.sf, 100, stations.sf)
 
 
