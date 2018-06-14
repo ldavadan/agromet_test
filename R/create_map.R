@@ -1,9 +1,11 @@
 ### Declaration of the function to create the map of spatialized temperature
 
-
+#' It creates a map with spatialized data
+#' @author Loïc Davadan - ldavadan.github.io
 #' @param spatial_data.sp A sp with spatialized data
 #' @param type.chr A character which specifies if you want a static or an interactive map.The arguments accepted are "static", "interactive"
 #' @param method.chr A character which specifies the method of spatialization you used and that will be printed on your map
+#' @return a map, static or interactive with spatialized data
 create_map_tsa <- function(
   spatial_data.sp = NULL,
   method.chr = NULL,
