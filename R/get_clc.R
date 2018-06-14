@@ -31,9 +31,11 @@ reclass_CLC <- function(col.name){
 
 
 # Description of the function get_clc_wal
-# It returns a data frame with percentage of cover of each land cover around a station
-# dist.num = distance of the buffer around the station
-get_clc_wal <- function(dist.num = NULL) {
+# It gets CLC data from Wallonia and reclass them
+get_clc_wal <- function() {
+  
+  # Lambert 2008
+  lambert2008.crs <- "+proj=lcc +lat_1=49.83333333333334 +lat_2=51.16666666666666 +lat_0=50.797815 +lon_0=4.359215833333333 +x_0=649328 +y_0=665262 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
   
   # Load spatial data from Wallonia limits
   be.sp <- getData('GADM', country = 'BE', level = 1, download = TRUE)
@@ -43,6 +45,7 @@ get_clc_wal <- function(dist.num = NULL) {
   
   # CORINE land cover for Belgium
   corine.sp <- readShapePoly("./data-raw/CLC12_BE.shp")
+  crs(corine.sp) <- lambert2008.crs
   # CORINE land cover for Wallonia
   # https://stackoverflow.com/questions/13982773/crop-for-spatialpolygonsdataframe
   corine.wal.sp <- crop(corine.sp, wallonie.3812.poly.sp)
@@ -70,8 +73,13 @@ get_clc_wal <- function(dist.num = NULL) {
   corine.wal.simple.sf <- corine.wal.sf %>%
     mutate(CLASS = reclass_CLC(code_12))
   
-  
-  corine.wal.simple.sp <- as(corine.wal.simple.sf, "Spatial")
+}
+
+
+# Description of the function extract_clc_stations
+# It returns a data frame with percentage of cover of each land cover around a station
+# dist.num = distance of the buffer around the station
+extract_clc_stations <- function(corine.wal.simple.sf = NULL, dist.num = NULL) {
   
   
   # Load AGROMET stations from API and project in EPSG:3812
@@ -85,21 +93,27 @@ get_clc_wal <- function(dist.num = NULL) {
   stations.buff.sf <- st_buffer(x = stations.sf, dist = dist.num)
   
   # Cross-reference data to find the different land covers in the buffer
-  st_crs(corine.wal.simple.sf) <- st_crs(stations.buff.sf)
-  class.buff.stations.sf <- st_intersection(corine.wal.simple.sf, stations.buff.sf)
+  # http://inspire.ngi.be/download-free/atomfeeds/AtomFeed-CLC2012-en.xml - CRS provided in the link
+  class.buff.stations.sf <- st_intersection(corine.wal.simple.sf, stations.buff.sf) 
+  class.buff.stations.sf <- mutate(class.buff.stations.sf, customID = paste0("poly_",seq_along(1:nrow(class.buff.stations.sf))))
+  
+  # Verification
+  identical(nrow(class.buff.stations.sf), length(unique(class.buff.stations.sf$customID)))
   
   # Extract area of land covers in the buffer
   # https://gis.stackexchange.com/questions/229453/create-a-circle-of-defined-radius-around-a-point-and-then-find-the-overlapping-a
-  class.buff.stations.sf.summary <- group_by(class.buff.stations.sf, ID) %>% 
-    summarise() %>%
+  class.buff.stations.sf.summary <- group_by(class.buff.stations.sf, customID) %>% 
+    dplyr::summarise() %>%
     mutate(common_area = st_area(.))
   
   # Make a column with percentage of occupation of each land cover
-  class.buff.stations.gr.sf <- inner_join(as.data.frame(class.buff.stations.sf), 
-                                          as.data.frame(class.buff.stations.sf.summary), "ID", copy = TRUE) %>%
+  class.buff <- st_join(x = class.buff.stations.sf, y = class.buff.stations.sf.summary, join = st_covered_by) %>%
     select(sid, CLASS, common_area) %>%
-    mutate(rate_cover = as.numeric(common_area/(3.14015737*dist.num^2) * 100))
+    mutate(rate_cover = as.numeric(common_area/(pi*100^2) * 100))
   
-  return(class.buff.stations.gr.sf)
+  return(class.buff)
+  
 }
-test <- get_clc_wal(50)
+
+# corine.wal.simple.sf <- get_clc_wal()
+# test <- extract_clc_stations(corine.wal.simple.sf, 100)

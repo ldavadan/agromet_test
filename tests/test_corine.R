@@ -33,6 +33,10 @@ source_files_recursively.fun("../agrometeor-public/R/")
 
 #unzip("./data-raw/CLC12_BE.zip", exdir = "./data-raw")
 
+# Lambert 2008
+lambert2008.crs <- "+proj=lcc +lat_1=49.83333333333334 +lat_2=51.16666666666666 +lat_0=50.797815 +lon_0=4.359215833333333 +x_0=649328 +y_0=665262 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
+
+
 # Load spatial data from Wallonia limits
 be.sp <- getData('GADM', country = 'BE', level = 1, download = TRUE)
 wallonie.sp <- be.sp[be.sp$NAME_1 == "Wallonie",]
@@ -40,6 +44,7 @@ wallonie.3812.poly.sp <- spTransform(wallonie.sp, CRS(projargs = dplyr::filter(r
 
 # CORINE land cover for Belgium
 corine.sp <- readShapePoly("./data-raw/CLC12_BE.shp")
+crs(corine.sp) <- lambert2008.crs
 # CORINE land cover for Wallonia
 # https://stackoverflow.com/questions/13982773/crop-for-spatialpolygonsdataframe
 corine.wal.sp <- crop(corine.sp, wallonie.3812.poly.sp)
@@ -47,8 +52,8 @@ corine.wal.sp <- crop(corine.sp, wallonie.3812.poly.sp)
 
 # Legend for CORINE land cover
 # Download legend
-download.file("http://www.eea.europa.eu/data-and-maps/data/corine-land-cover-2006-raster-1/corine-land-cover-classes-and/clc_legend.csv/at_download/file",
-              destfile = "./data-raw/clc_legend.csv")
+#download.file("http://www.eea.europa.eu/data-and-maps/data/corine-land-cover-2006-raster-1/corine-land-cover-classes-and/clc_legend.csv/at_download/file",
+#              destfile = "./data-raw/clc_legend.csv")
 legend <- read.csv(file = "./data-raw/clc_legend.csv", header = TRUE, sep = ",")
 
 # Legend codes for Wallonia
@@ -61,7 +66,7 @@ legend.wal <- subset(legend, CLC_CODE %in% legend.code.wal$unique.corine.wal.sp.
 # CLC_CODE class from integer to numeric
 legend.wal$CLC_CODE <- as.numeric(legend.wal$CLC_CODE)
 
-corine.wal.sf <- st_as_sf(corine.wal.sp)
+corine.wal.sf <- st_as_sf(corine.wal.sp, crs = 3812)
 corine.wal.sf$code_12 <- as.numeric(paste(corine.wal.sf$code_12))
 
 
@@ -123,19 +128,34 @@ stations.sf <- st_as_sf(stations.sp)
 stations.buff.sf <- st_buffer(x = stations.sf, dist = 100)
 
 # Cross-reference data to find the different land covers in the buffer
-st_crs(corine.wal.simple.sf) <- st_crs(stations.buff.sf)
-class.buff.stations.sf <- st_intersection(corine.wal.simple.sf, stations.buff.sf)
+# http://inspire.ngi.be/download-free/atomfeeds/AtomFeed-CLC2012-en.xml - CRS provided in the link
+class.buff.stations.sf <- st_intersection(corine.wal.simple.sf, stations.buff.sf) 
+class.buff.stations.sf <- mutate(class.buff.stations.sf, customID = paste0("poly_",seq_along(1:nrow(class.buff.stations.sf))))
 
+# Verification
+identical(nrow(class.buff.stations.sf), length(unique(class.buff.stations.sf$customID)))
 
 # Extract area of land covers in the buffer
 # https://gis.stackexchange.com/questions/229453/create-a-circle-of-defined-radius-around-a-point-and-then-find-the-overlapping-a
-class.buff.stations.sf.summary <- group_by(class.buff.stations.sf, ID) %>% 
-  summarise() %>%
+class.buff.stations.sf.summary <- group_by(class.buff.stations.sf, customID) %>% 
+  dplyr::summarise() %>%
   mutate(common_area = st_area(.))
 
 # Make a column with percentage of occupation of each land cover
-class.buff.stations.gr.sf <- inner_join(as.data.frame(class.buff.stations.sf), 
-                                        as.data.frame(class.buff.stations.sf.summary), "ID", copy = TRUE) %>%
+# class.buff.stations.gr.sf <- inner_join(as.data.frame(class.buff.stations.sf), 
+#                                         as.data.frame(class.buff.stations.sf.summary), "ID", copy = TRUE) %>%
+#   select(sid, CLASS, common_area) %>%
+#   mutate(rate_cover = as.numeric(common_area/(pi*100^2) * 100))
+
+# Make a column with percentage of occupation of each land cover
+class.buff <- st_join(x = class.buff.stations.sf, y = class.buff.stations.sf.summary, join = st_covered_by) %>%
   select(sid, CLASS, common_area) %>%
-  mutate(rate_cover = as.numeric(common_area/(3.14015737*100^2) * 100))
+  mutate(rate_cover = as.numeric(common_area/(pi*100^2) * 100))
+
+## Identification of the polygon which was problematic
+# guilty <- dplyr::filter(corine.wal.simple.sf, ID == "BE-6930")
+# map <- mapview(class.buff)
+# map + corine.wal.simple.sf
+
+
 

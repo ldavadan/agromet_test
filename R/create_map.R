@@ -109,13 +109,6 @@ create_map_tsa <- function(
 # map
 
 
-load("~/Documents/code/agromet-tests/data-raw/gridded.3812.sp")
-create_map_tsa(spatial_data.sp = gridded.3812.sp, type.chr = "static", method.chr = "<na>")
+# load("~/Documents/code/agromet-tests/data-raw/gridded.3812.sp")
+# create_map_tsa(spatial_data.sp = gridded.3812.sp, type.chr = "static", method.chr = "<na>")
 
-
-
-
-
-
-
-# recup land cover corine, rapport creation map, env travail
