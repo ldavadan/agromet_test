@@ -32,6 +32,8 @@ class.buff.df <-data.frame(class.buff)
 class.stations.df <- class.buff.df %>%
   select(sid, CLASS, rate_cover) %>%
   dcast(sid ~ CLASS, fun = sum)
+# reorder columns
+class.stations.df<- class.stations.df[,c(1,2,5,4,3,6)]
 
 
 

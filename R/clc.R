@@ -135,6 +135,8 @@ convert_stations_clc_buffer <- function(class.buffers.sf = NULL) {
     dplyr::select(sid, CLASS, rate_cover) %>%
     reshape2::dcast(sid ~ CLASS, fun = base::sum)
   
+  class.buffers.clean.df <- class.buffers.clean.df[,c(1,2,5,4,3,6)]
+  
   base::return(class.buffers.clean.df)
 }
 
