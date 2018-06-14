@@ -42,15 +42,7 @@ get_clc_wal <- function() {
   
   # Reclass all types of CLC to create 6 groups
   corine.wal.simple.sf <- corine.wal.sf %>%
-    dplyr::mutate(CLASS = dplyr::case_when(code_12 <= 121 ~ "Artificials surfaces",
-                                           code_12 == 122 ~ "Road/Rail",
-                                           code_12 == 123 ~ "Artificials surfaces",
-                                           code_12 == 124 ~ "Artificials surfaces",
-                                           code_12 == 131 ~ "Artificials surfaces",
-                                           code_12 == 132 ~ "Artificials surfaces",
-                                           code_12 == 133 ~ "Artificials surfaces",
-                                           code_12 == 141 ~ "Artificials surfaces",
-                                           code_12 == 142 ~ "Artificials surfaces",
+    dplyr::mutate(CLASS = dplyr::case_when(code_12 <= 142 ~ "Artificials surfaces",
                                            code_12 == 211 ~ "Agricultural areas",
                                            code_12 == 222 ~ "Agricultural areas",
                                            code_12 == 231 ~ "Herbaceous vegetation",
