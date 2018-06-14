@@ -78,14 +78,9 @@ get_clc_wal <- function() {
 #' It returns a data frame with percentage of cover of each land cover around a station
 #' @param corine.wal.simple.sf A simple feature of land covers in Wallonia
 #' @param radius.num A numeric corresponding to the radius of the buffer that you want
+#' @param stations.sf A simple feature which has coordinates of points
 #' @return a data frame presenting percentage of cover of each land cover around a station
-extract_stations_clc_buffer <- function(corine.wal.simple.sf = NULL, radius.num = NULL) {
-  
-  
-  # Load AGROMET stations from API and project in EPSG:3812
-  stations.sp <- build_agromet_stations_points.sp.fun()
-  stations.sp <- sp::spTransform(stations.sp, CRSobj = "+proj=lcc +lat_1=49.83333333333334 +lat_2=51.16666666666666 +lat_0=50.797815 +lon_0=4.359215833333333 +x_0=649328 +y_0=665262 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
-  stations.sf <- sf::st_as_sf(stations.sp)
+extract_stations_clc_buffer <- function(corine.wal.simple.sf = NULL, radius.num = NULL, stations.sf = NULL) {
   
   # Make a buffer around stations
   # https://gis.stackexchange.com/questions/229453/create-a-circle-of-defined-radius-around-a-point-and-then-find-the-overlapping-a
@@ -118,5 +113,31 @@ extract_stations_clc_buffer <- function(corine.wal.simple.sf = NULL, radius.num 
   
 }
 
+# # Load AGROMET stations from API and project in EPSG:3812
+# stations.sp <- build_agromet_stations_points.sp.fun()
+# stations.sp <- sp::spTransform(stations.sp, CRSobj = "+proj=lcc +lat_1=49.83333333333334 +lat_2=51.16666666666666 +lat_0=50.797815 +lon_0=4.359215833333333 +x_0=649328 +y_0=665262 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
+# stations.sf <- sf::st_as_sf(stations.sp)
 # corine.wal.simple.sf <- get_clc_wal()
-# test <- extract_clc_stations(corine.wal.simple.sf, 100)
+# test <- extract_stations_clc_buffer(corine.wal.simple.sf, 100, stations.sf)
+
+
+#' It reshapes data
+#' @param class.buffers.sf A simple feature corresponding to buffers associated to their land covers with proportions
+#' @return a data frame with percentage of each land covers for each station
+convert_stations_clc_buffer <- function(class.buffers.sf = NULL) {
+  
+  # Delete geometry column
+  class.buffers.df <- base::data.frame(class.buffers.sf)
+  
+  # Reshape data with CLASS labels in columns names
+  # https://stackoverflow.com/questions/39053451/using-spread-with-duplicate-identifiers-for-rows
+  class.buffers.clean.df <- class.buffers.df %>%
+    dplyr::select(sid, CLASS, rate_cover) %>%
+    reshape2::dcast(sid ~ CLASS, fun = base::sum)
+  
+  base::return(class.buffers.clean.df)
+}
+
+# test2 <- convert_stations_clc_buffer(test)
+
+
