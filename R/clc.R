@@ -78,8 +78,8 @@ get_clc_wal <- function() {
 
 # Description of the function extract_clc_stations
 # It returns a data frame with percentage of cover of each land cover around a station
-# dist.num = distance of the buffer around the station
-extract_clc_stations <- function(corine.wal.simple.sf = NULL, dist.num = NULL) {
+# radius.num = distance of the buffer around the station
+extract_stations_clc_buffer <- function(corine.wal.simple.sf = NULL, radius.num = NULL) {
   
   
   # Load AGROMET stations from API and project in EPSG:3812
@@ -90,7 +90,7 @@ extract_clc_stations <- function(corine.wal.simple.sf = NULL, dist.num = NULL) {
   # Make a buffer around stations
   # https://gis.stackexchange.com/questions/229453/create-a-circle-of-defined-radius-around-a-point-and-then-find-the-overlapping-a
   # https://stackoverflow.com/questions/46704878/circle-around-a-geographic-point-with-st-buffer
-  stations.buff.sf <- st_buffer(x = stations.sf, dist = dist.num)
+  stations.buff.sf <- st_buffer(x = stations.sf, dist = radius.num)
   
   # Cross-reference data to find the different land covers in the buffer
   # http://inspire.ngi.be/download-free/atomfeeds/AtomFeed-CLC2012-en.xml - CRS provided in the link
@@ -109,9 +109,11 @@ extract_clc_stations <- function(corine.wal.simple.sf = NULL, dist.num = NULL) {
   # Make a column with percentage of occupation of each land cover
   class.buff <- st_join(x = class.buff.stations.sf, y = class.buff.stations.sf.summary, join = st_covered_by) %>%
     select(sid, CLASS, common_area) %>%
-    mutate(rate_cover = as.numeric(common_area/(pi*100^2) * 100))
+    mutate(rate_cover = as.numeric(common_area/(pi*radius.num^2) * 100))
   
   return(class.buff)
+  
+  
   
 }
 
