@@ -100,7 +100,7 @@ reclass_CLC <- function(col.name){
 corine.wal.simple.sf <- corine.wal.sf %>%
   mutate(CLASS = reclass_CLC(code_12))
 
-corine.wal.simple.sp <- as(corine.wal.simple.sf, "Spatial")
+#corine.wal.simple.sp <- as(corine.wal.simple.sf, "Spatial")
 
 
 
@@ -153,9 +153,8 @@ class.buff <- st_join(x = class.buff.stations.sf, y = class.buff.stations.sf.sum
   mutate(rate_cover = as.numeric(common_area/(pi*100^2) * 100))
 
 ## Identification of the polygon which was problematic
-# guilty <- dplyr::filter(corine.wal.simple.sf, ID == "BE-6930")
-# map <- mapview(class.buff)
-# map + corine.wal.simple.sf
+guilty <- dplyr::filter(corine.wal.simple.sf, ID == "BE-6930")
+map <- mapview(class.buff)
 
-
+mapview(guilty) + stations.buff.sf
 
