@@ -23,7 +23,7 @@ source_files_recursively.fun("../agrometeor-public/R/")
 
 
 corine.wal.simple.sf <- get_clc_wal()
-class.buff <- extract_stations_clc_buffer(corine.wal.simple.sf = corine.wal.simple.sf, radius.num = 100)
+class.buff.sf <- extract_stations_clc_buffer(corine.wal.simple.sf = corine.wal.simple.sf, radius.num = 100, stations.sf)
 # Delete geometry column
 class.buff.df <-data.frame(class.buff)
 
@@ -33,7 +33,7 @@ class.stations.df <- class.buff.df %>%
   select(sid, CLASS, rate_cover) %>%
   dcast(sid ~ CLASS, fun = sum)
 # reorder columns
-class.stations.df<- class.stations.df[,c(1,2,5,4,3,6)]
+class.stations.df<- class.stations.df[,c(1,2,5,4,3)]
 
 
 

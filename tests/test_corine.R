@@ -20,7 +20,7 @@ p_loaded()
 
 # Dynamic Sourcing of all the required functions
 source(paste0("../R-utilities/R-utilities.R"))
-#source_files_recursively.fun("./R")
+source_files_recursively.fun("./R")
 source_files_recursively.fun("../agrometeor-public/R/")
 
 # https://www.geo.be/#!/catalog/details/bcd19aa9-c320-4116-971b-6e4376137f13?l=en
@@ -73,15 +73,7 @@ corine.wal.sf$code_12 <- as.numeric(paste(corine.wal.sf$code_12))
 # Description of the function to reclass CLC
 reclass_CLC <- function(col.name){
   
-  case_when(col.name <= 121 ~ "Artificials surfaces",
-            col.name == 122 ~ "Road/Rail",
-            col.name == 123 ~ "Artificials surfaces",
-            col.name == 124 ~ "Artificials surfaces",
-            col.name == 131 ~ "Artificials surfaces",
-            col.name == 132 ~ "Artificials surfaces",
-            col.name == 133 ~ "Artificials surfaces",
-            col.name == 141 ~ "Artificials surfaces",
-            col.name == 142 ~ "Artificials surfaces",
+  case_when(col.name <= 142 ~ "Artificials surfaces",
             col.name == 211 ~ "Agricultural areas",
             col.name == 222 ~ "Agricultural areas",
             col.name == 231 ~ "Herbaceous vegetation",

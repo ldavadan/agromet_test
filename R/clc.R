@@ -92,16 +92,13 @@ extract_stations_clc_buffer <- function(corine.wal.simple.sf = NULL, radius.num 
   
   base::return(class.buff)
   
-  base::library(mapview)
-  mapview::mapview(class.buff)
-  
 }
 
 # # Load AGROMET stations from API and project in EPSG:3812
-stations.sp <- build_agromet_stations_points.sp.fun()
-stations.sp <- sp::spTransform(stations.sp, CRSobj = "+proj=lcc +lat_1=49.83333333333334 +lat_2=51.16666666666666 +lat_0=50.797815 +lon_0=4.359215833333333 +x_0=649328 +y_0=665262 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
-stations.sf <- sf::st_as_sf(stations.sp)
-corine.wal.simple.sf <- get_clc_wal()
+# stations.sp <- build_agromet_stations_points.sp.fun()
+# stations.sp <- sp::spTransform(stations.sp, CRSobj = "+proj=lcc +lat_1=49.83333333333334 +lat_2=51.16666666666666 +lat_0=50.797815 +lon_0=4.359215833333333 +x_0=649328 +y_0=665262 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
+# stations.sf <- sf::st_as_sf(stations.sp)
+# corine.wal.simple.sf <- get_clc_wal()
 # test <- extract_stations_clc_buffer(corine.wal.simple.sf, 100, stations.sf)
 
 
@@ -120,7 +117,7 @@ convert_stations_clc_buffer <- function(class.buffers.sf = NULL) {
     reshape2::dcast(sid ~ CLASS, fun = base::sum)
   
   # https://stackoverflow.com/questions/5620885/how-does-one-reorder-columns-in-a-data-frame
-  class.buffers.clean.df <- class.buffers.clean.df[,c(1,2,5,4,3,6)]
+  class.buffers.clean.df <- class.buffers.clean.df[,c(1,2,5,4,3)]
   
   base::return(class.buffers.clean.df)
 }
