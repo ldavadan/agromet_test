@@ -69,7 +69,7 @@ extract_stations_clc_buffer <- function(corine.wal.simple.sf = NULL, radius.num 
   # Make a buffer around stations
   # https://gis.stackexchange.com/questions/229453/create-a-circle-of-defined-radius-around-a-point-and-then-find-the-overlapping-a
   # https://stackoverflow.com/questions/46704878/circle-around-a-geographic-point-with-st-buffer
-  stations.buff.sf <- sf::st_buffer(x = stations.sf, dist = radius.num)
+  stations.buff.sf <- sf::st_buffer(x = stations.sf, dist = radius.num,nQuadSegs = 1)
   
   # Cross-reference data to find the different land covers in the buffer
   # http://inspire.ngi.be/download-free/atomfeeds/AtomFeed-CLC2012-en.xml - CRS provided in the link

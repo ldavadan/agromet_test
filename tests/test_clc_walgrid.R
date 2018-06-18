@@ -1,3 +1,4 @@
+# create a grid of points (center of each cell) for Wallonia
 build_wal_grid.fun <- function(res.num, sf.bool, CRS.proj.bool){
   
   # load some spatial data. Administrative Boundary
@@ -41,17 +42,45 @@ build_wal_grid.fun <- function(res.num, sf.bool, CRS.proj.bool){
   
 }
 
-
+# Create grid wallonia
+wallonie.3812.sf <- build_wal_grid.fun(1000, TRUE, TRUE)
+# Separate columns geometry
+# https://github.com/r-spatial/sf/issues/231
+wallonie.3812.df <- do.call(rbind, st_geometry(wallonie.3812.sf)) %>% 
+  as_tibble() %>% setNames(c("lon","lat"))
+# inspired by https://stackoverflow.com/questions/19627344/how-to-create-a-raster-from-a-data-frame-in-r
+wallonie.3812.ras <- rasterFromXYZ(wallonie.3812.df)
 
 corine.wal.simple.sf <- get_clc_wal()
+# Rasterize
+corine.wal.simple.sp <- as(corine.wal.simple.sf, "Spatial")
+corine.wal.simple.ras <- rasterize(corine.wal.simple.sp, wallonie.3812.ras)
+###########
+# clc <- as.data.frame(corine.wal.simple.ras, xy=TRUE)
 
-wallonie.3812.sf <- build_wal_grid.fun(10000, TRUE, TRUE)
+# core the topo rasters stack at the positions of the interpolation grid
+clc.df <- data.frame(
+  raster::extract(
+    corine.wal.simple.ras,
+    as(wallonie.3812.sf, "Spatial"), weights = TRUE, fun = max)
+  )
+###########
+# build grid wallonia
+wallonie.3812.sf <- build_wal_grid.fun(1000, TRUE, TRUE)
 # wallonie.3812.sp <- spTransform(wallonie.3812.sp, CRSobj = lambert2008.crs)
 # wallonie.3812.sf <- st_as_sf(wallonie.3812.sp)
 
-class.grid.wal.sf <- extract_stations_clc_buffer(corine.wal.simple.sf, radius.num = 500, stations.sf = wallonie.3812.sf)
-mapview(class.grid.wal.sf)
+# extract clc on buffers
+class.grid.wal.sf <- extract_stations_clc_buffer(corine.wal.simple.sf, radius.num = sqrt(500^2 + 500^2), stations.sf = wallonie.3812.sf)
+#mapview(class.grid.wal.sf)
 result <- convert_stations_clc_buffer(class.grid.wal.sf)
 
 
-
+### Export shapefile
+# sf to sp + conversion common_area to numeric because units not accepted
+class.grid.wal.sp <- as(class.grid.wal.sf, "Spatial")
+class.grid.wal.sp$common_area <- as.numeric(class.grid.wal.sp$common_area)
+library(rgdal)
+# write shapefile
+# https://stackoverflow.com/questions/13926811/export-a-polygon-from-an-r-plot-as-a-shapefile
+writeOGR(class.grid.wal.sp, dsn = './data-output/test', layer = 'sid', driver = "ESRI Shapefile")

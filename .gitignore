@@ -6,3 +6,4 @@
 data-raw/
 *.rds
 *.RData
+data-output/
