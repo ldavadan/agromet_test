@@ -117,7 +117,7 @@ convert_stations_clc_buffer <- function(class.buffers.sf = NULL) {
     reshape2::dcast(sid ~ CLASS, fun = base::sum)
   
   # https://stackoverflow.com/questions/5620885/how-does-one-reorder-columns-in-a-data-frame
-  class.buffers.clean.df <- class.buffers.clean.df[,c(1,2,5,4,3)]
+  class.buffers.clean.df <- class.buffers.clean.df[,c(1,2,5,4,3,6)]
   
   base::return(class.buffers.clean.df)
 }

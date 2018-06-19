@@ -71,9 +71,9 @@ wallonie.3812.sf <- build_wal_grid.fun(1000, TRUE, TRUE)
 # wallonie.3812.sf <- st_as_sf(wallonie.3812.sp)
 
 # extract clc on buffers
-class.grid.wal.sf <- extract_stations_clc_buffer(corine.wal.simple.sf, radius.num = sqrt(500^2 + 500^2), stations.sf = wallonie.3812.sf)
+class.grid.wal.sf <- extract_stations_clc_buffer(corine.wal.simple.sf, radius.num = 500, stations.sf = wallonie.3812.sf)
 #mapview(class.grid.wal.sf)
-result <- convert_stations_clc_buffer(class.grid.wal.sf)
+class.buff.clean.df <- convert_stations_clc_buffer(class.grid.wal.sf)
 
 
 ### Export shapefile
